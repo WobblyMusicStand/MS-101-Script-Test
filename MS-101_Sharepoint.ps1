@@ -1,4 +1,4 @@
-﻿Param(
+Param(
     [Parameter(Mandatory=$True)]
     [string]$TenantName,
     [Parameter(Mandatory=$True)]
@@ -8,19 +8,25 @@
 )
 
 Connect-AzureAD
-Get-AzureADDirectorySettingTemplate
+
+#Create and deploy a setting template and set the EnableMIPLabels property to true.
+#Get-AzureADDirectorySettingTemplate
 $TemplateId = (Get-AzureADDirectorySettingTemplate | where { $_.DisplayName -eq "Group.Unified" }).Id
 $Template = Get-AzureADDirectorySettingTemplate | where -Property Id -Value $TemplateId -EQ
 $Setting = $Template.CreateDirectorySetting()
-$setting["EnableMIPLabels"] = "True"
+$Setting["EnableMIPLabels"] = "True"
 
-New-AzureADDirectorySetting -DirectorySetting $Setting
+#if a setting already exists (from a previous lab) then ensure that is has "EnableMIPLabels" set to True.
+try {
+    New-AzureADDirectorySetting -DirectorySetting $Setting
+} catch {
+    $setting = Get-AzureADDirectorySetting
+    $setting["EnableMIPLabels"] = "True"
+    Set-AzureADDirectorySetting -Id $setting.id -DirectorySetting $setting
+}
+
 Connect-SPOService -Url "https://$TenantID" + "-admin.sharepoint.com" -Credential "Office365Admin@$TenantName"
 
-$Password 
-
-
 Set-SPOTenant -EnableAIPIntegration $true 
-Install-Module ExchangeOnlineManagement.
 Connect-IPPSSession -UserPrincipalName "Office365Admin@$TenantName"
 Execute-AzureAdLabelSyn
